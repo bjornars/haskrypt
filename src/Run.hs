@@ -1,6 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Run (run) where
+
+module Run
+  ( run,
+  )
+where
 
 import Import
 

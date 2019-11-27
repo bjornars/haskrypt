@@ -1,57 +1,38 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module ShaSpec
-  ( spec
-  ) where
+  ( spec,
+  )
+where
 
 import Data.Char
-import qualified RIO.ByteString as B
-
 import Import
-import Sha (Digest(..), sha256)
+import RIO.List (repeat)
+import qualified RIO.ByteString as B
+import Sha (Digest (..), sha256)
 import Test.Hspec
 
-breplicate :: Int -> Char -> ByteString
-breplicate n = B.replicate n . fromIntegral . ord
+digest_from_string :: [Char] -> Digest
+digest_from_string = Digest . B.pack . fmap fromIntegral . go
+  where
+    go (x1 : x2 : xs) = (16 * char_to_nibble x1 + (char_to_nibble x2)) : go xs
+    go [] = mempty
+    go _ = undefined
+    char_to_nibble c | c >= '0' && c <= '9' = ord c - ord '0'
+    char_to_nibble c | c >= 'A' && c <= 'F' = ord c - ord 'A' + 10
+    char_to_nibble c | c >= 'a' && c <= 'f' = ord c - ord 'a' + 10
+    char_to_nibble _ = undefined
 
 spec :: Spec
 spec = do
   describe "sha256" $ do
     it "handles empty input" $ do
-      sha256 "" `shouldBe`
-        Digest
-          (B.pack
-             [ 0xe3
-             , 0xb0
-             , 0xc4
-             , 0x42
-             , 0x98
-             , 0xfc
-             , 0x1c
-             , 0x14
-             , 0x9a
-             , 0xfb
-             , 0xf4
-             , 0xc8
-             , 0x99
-             , 0x6f
-             , 0xb9
-             , 0x24
-             , 0x27
-             , 0xae
-             , 0x41
-             , 0xe4
-             , 0x64
-             , 0x9b
-             , 0x93
-             , 0x4c
-             , 0xa4
-             , 0x95
-             , 0x99
-             , 0x1b
-             , 0x78
-             , 0x52
-             , 0xb8
-             , 0x55
-             ])
+      sha256 "" `shouldBe` digest_from_string "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    it "handles small input" $ do
+      sha256 "hest" `shouldBe` digest_from_string "b831b3e336ecb131ebc5014393c084bf5d1580854212f64df9ed9226feebc4ae"
+    it "handles medium-small input" $ do
+      sha256 (mconcat . take 64 $ repeat "h") `shouldBe` digest_from_string "b831b3e336ecb131ebc5014393c084bf5d1580854212f64df9ed9226feebc4ae"
+    it "handles medium input" $ do
+      sha256 (mconcat . take 1000 $ repeat "hesterfint") `shouldBe` digest_from_string "b831b3e336ecb131ebc5014393c084bf5d1580854212f64df9ed9226feebc4ae"

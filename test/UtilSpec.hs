@@ -2,15 +2,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module UtilSpec
-  ( spec
-  ) where
+  ( spec,
+  )
+where
 
 import Data.Char
-import qualified RIO.ByteString as B
-
 import Import
+import qualified RIO.ByteString as B
 import Test.Hspec
-import Util (w32_to_w8, bytestring_to_w32, chunk, sha_padding)
+import Util (bytestring_to_w32, chunk, sha_padding, w32_to_w8)
 
 breplicate :: Int -> Char -> ByteString
 breplicate n = B.replicate n . fromIntegral . ord
@@ -41,4 +41,8 @@ spec = do
     it "pads empty input" $ do
       let res = sha_padding 0
       B.length res `shouldBe` 64
-      res `shouldBe` (B.pack $ 0x80 : (replicate 63 0))
+      res `shouldBe`( B.pack $ 0x80 : (replicate 63 0))
+    it "pads small input" $ do
+      let res = sha_padding 4
+      B.length res `shouldBe` 60
+      res `shouldBe` (B.pack $ 0x80 : (replicate 51 0) <> [0, 0, 0, 0, 0, 0, 0, 4 * 8])
