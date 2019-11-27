@@ -46,3 +46,8 @@ spec = do
       let res = sha_padding 4
       B.length res `shouldBe` 60
       res `shouldBe` (B.pack $ 0x80 : (replicate 51 0) <> [0, 0, 0, 0, 0, 0, 0, 4 * 8])
+
+    it "pads near chunk-sized input" $ do
+      let res = sha_padding 62
+      B.length res `shouldBe` 128 - 62
+      res `shouldBe` (B.pack $ 0x80 : (replicate (128 - 62 - 9) 0) <> [0, 0, 0, 0, 0, 0, 1, 240])

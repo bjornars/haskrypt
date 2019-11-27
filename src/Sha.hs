@@ -43,9 +43,9 @@ instance Show Digest where
 
 data ShaWork
   = ShaWork
-      { numBytes :: Word64,
-        pendingWork :: ByteString,
-        hashState :: [Word32] -- 8 long
+      { numBytes :: !Word64,
+        pendingWork :: !ByteString,
+        hashState :: ![Word32] -- 8 long
       }
   deriving (Show, Eq)
 
@@ -86,8 +86,8 @@ doChunk current bs =
   let stuff = foldl' (&) current (go <$> [0 .. 63])
    in zipWith (+) current stuff
   where
-    schedule = createMessageSchedule (flip bytestring_to_w32 bs <$> [0, 4 .. 63])
-    go i [a, b, c, d, e, f, g, h] =
+    !schedule = createMessageSchedule (flip bytestring_to_w32 bs <$> [0, 4 .. 63])
+    go i ![!a, !b, !c, !d, !e, !f, !g, !h] =
       let s1 = (e `rotateR` 6) `xor` (e `rotateR` 11) `xor` (e `rotateR` 25)
           ch = (e .&. f) `xor` ((complement e) .&. g)
           temp1 = h + s1 + ch + (sha_roundConstants !! i) + (schedule !! i)
@@ -95,7 +95,7 @@ doChunk current bs =
           maj = (a .&. b) `xor` (a .&. c) `xor` (b .&. c)
           temp2 = s0 + maj
        in [temp1 + temp2, a, b, c, d + temp1, e, f, g]
-    go _ _ = undefined
+    go _ _ = error "doChunk"
 
 -- extend 128 bits of message into 512 bits
 createMessageSchedule :: [Word32] -> [Word32]
@@ -112,7 +112,7 @@ createMessageSchedule = reverse  . go 48 . reverse
             w2 = ws !! 2
             s0 = (w15 `rotateR` 7) `xor` (w15 `rotateR` 18) `xor` (w15 `shiftR` 3)
             s1 = (w2 `rotateR` 17) `xor` (w2 `rotateR` 19) `xor` (w2 `shiftR` 10)
-            next = w16 + s0 + w7 + s1
+            !next = w16 + s0 + w7 + s1
          in go (size - 1) ws
 
 -- pad the remaining input into a 512 bit block and process,

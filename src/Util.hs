@@ -28,7 +28,7 @@ bytestring_to_w32 idx bs =
    in case bytes of
         [b3, b2, b1, b0] ->
           (b0 .|. (b1 `rotateL` 8) .|. (b2 `rotateL` 16) .|. (b3 `rotateL` 24))
-        _ -> undefined
+        _ -> error "bytestring_to_w32"
 
 byte :: (Integral a, Bits a) => a -> Int -> Word8
 byte b n = fromIntegral $ (b `shiftR` n) .&. 255
@@ -38,7 +38,7 @@ w32_to_w8 b = fmap (byte b) [24, 16, 8, 0]
 
 sha_padding :: Word64 -> ByteString
 sha_padding numBytes =
-  let zeroes = (64 :: Int) - fromIntegral (numBytes + 8 + 1 `mod` 64)
+  let zeroes = 64 - fromIntegral (numBytes + 8 + 1) `mod` 64
       -- use original message length in **bits**
       size = fmap (byte (numBytes * 8)) [56,48 .. 0]
    in B.pack $ 0x80 : (replicate zeroes 0) ++ size
